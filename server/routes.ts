@@ -1,9 +1,59 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import session from "express-session";
 import { storage } from "./storage";
 import { insertContractorSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Session configuration
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'dev-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
+
+  // Authentication middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (req.session && req.session.authenticated) {
+      next();
+    } else {
+      res.status(401).json({ message: 'Unauthorized' });
+    }
+  };
+
+  // Authentication routes
+  app.post('/api/auth/login', (req: any, res) => {
+    const { username, password } = req.body;
+    
+    // Simple demo credentials
+    if (username === 'admin' && password === 'password123') {
+      req.session.authenticated = true;
+      req.session.user = { username: 'admin' };
+      res.json({ success: true, user: { username: 'admin' } });
+    } else {
+      res.status(401).json({ message: 'Invalid credentials' });
+    }
+  });
+
+  app.post('/api/auth/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        res.status(500).json({ message: 'Could not log out' });
+      } else {
+        res.json({ success: true });
+      }
+    });
+  });
+
+  app.get('/api/auth/user', requireAuth, (req: any, res) => {
+    res.json(req.session.user);
+  });
+
   // Get all contractors
   app.get("/api/contractors", async (req, res) => {
     try {

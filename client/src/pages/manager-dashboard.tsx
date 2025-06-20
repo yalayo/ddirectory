@@ -257,24 +257,35 @@ export default function ManagerDashboard() {
             <h1 className="text-3xl font-bold text-foreground">Manager Dashboard</h1>
             <p className="text-muted-foreground mt-2">Manage contractors and directory listings</p>
           </div>
-          <Dialog open={isAddDialogOpen || !!editingContractor} onOpenChange={(open) => {
-            if (!open) {
-              setIsAddDialogOpen(false);
-              resetForm();
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button onClick={() => setIsAddDialogOpen(true)} className="btn-primary">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Contractor
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingContractor ? 'Edit Contractor' : 'Add New Contractor'}
-                </DialogTitle>
-              </DialogHeader>
+          <div className="flex gap-4">
+            <Button 
+              variant="outline"
+              onClick={async () => {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                setLocation('/manager/login');
+              }}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+            <Dialog open={isAddDialogOpen || !!editingContractor} onOpenChange={(open) => {
+              if (!open) {
+                setIsAddDialogOpen(false);
+                resetForm();
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setIsAddDialogOpen(true)} className="btn-primary">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Contractor
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingContractor ? 'Edit Contractor' : 'Add New Contractor'}
+                  </DialogTitle>
+                </DialogHeader>
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -550,7 +561,7 @@ export default function ManagerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {contractorsLoading ? (
                 <div className="text-center py-8">Loading contractors...</div>
               ) : contractors.length === 0 ? (
                 <div className="text-center py-8">
