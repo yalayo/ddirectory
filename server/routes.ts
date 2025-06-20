@@ -27,16 +27,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Authentication routes
-  app.post('/api/auth/login', (req: any, res) => {
-    const { username, password } = req.body;
-    
-    // Simple demo credentials
-    if (username === 'admin' && password === 'password123') {
-      req.session.authenticated = true;
-      req.session.user = { username: 'admin' };
-      res.json({ success: true, user: { username: 'admin' } });
-    } else {
-      res.status(401).json({ message: 'Invalid credentials' });
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+      }
+
+      // Authenticate user with database
+      const user = await storage.authenticateUser(username, password);
+      
+      if (user) {
+        req.session.authenticated = true;
+        req.session.user = { 
+          id: user.id,
+          username: user.username,
+          role: user.role 
+        };
+        res.json({ 
+          success: true, 
+          user: { 
+            id: user.id,
+            username: user.username,
+            role: user.role 
+          } 
+        });
+      } else {
+        res.status(401).json({ message: 'Invalid credentials' });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   });
 
@@ -52,6 +74,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/user', requireAuth, (req: any, res) => {
     res.json(req.session.user);
+  });
+
+  // Create admin user endpoint (for development)
+  app.post('/api/auth/create-admin', async (req: any, res) => {
+    try {
+      const user = await storage.createHashedUser('admin', 'password123', 'manager');
+      res.json({ success: true, message: 'Admin user created', userId: user.id });
+    } catch (error: any) {
+      if (error.message?.includes('duplicate')) {
+        res.status(400).json({ message: 'Admin user already exists' });
+      } else {
+        console.error('Error creating admin user:', error);
+        res.status(500).json({ message: 'Failed to create admin user' });
+      }
+    }
   });
 
   // Get all contractors
