@@ -12,6 +12,8 @@ import {
   type User, 
   type InsertUser 
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -329,4 +331,79 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// rewrite MemStorage to DatabaseStorage
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getAllContractors(): Promise<Contractor[]> {
+    return await db.select().from(contractors);
+  }
+
+  async getContractor(id: number): Promise<Contractor | undefined> {
+    const [contractor] = await db.select().from(contractors).where(eq(contractors.id, id));
+    return contractor || undefined;
+  }
+
+  async getContractorsByCategory(category: string): Promise<Contractor[]> {
+    return await db.select().from(contractors).where(eq(contractors.category, category));
+  }
+
+  async getContractorsByLocation(location: string, radius?: number): Promise<Contractor[]> {
+    return await db.select().from(contractors).where(eq(contractors.location, location));
+  }
+
+  async searchContractors(query: string): Promise<Contractor[]> {
+    // For now, return all contractors - in production would use full-text search
+    return await db.select().from(contractors);
+  }
+
+  async createContractor(contractor: InsertContractor): Promise<Contractor> {
+    const [created] = await db
+      .insert(contractors)
+      .values(contractor)
+      .returning();
+    return created;
+  }
+
+  async getAllProjectTypes(): Promise<ProjectType[]> {
+    return await db.select().from(projectTypes);
+  }
+
+  async createProjectType(projectType: InsertProjectType): Promise<ProjectType> {
+    const [created] = await db
+      .insert(projectTypes)
+      .values(projectType)
+      .returning();
+    return created;
+  }
+
+  async getReviewsByContractor(contractorId: number): Promise<Review[]> {
+    return await db.select().from(reviews).where(eq(reviews.contractorId, contractorId));
+  }
+
+  async createReview(review: InsertReview): Promise<Review> {
+    const [created] = await db
+      .insert(reviews)
+      .values(review)
+      .returning();
+    return created;
+  }
+}
+
+export const storage = new DatabaseStorage();
