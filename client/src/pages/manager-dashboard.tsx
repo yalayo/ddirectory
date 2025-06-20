@@ -27,19 +27,19 @@ const contractorSchema = z.object({
   category: z.string().min(1, "Please select a category"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   location: z.string().min(1, "Location is required"),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  address: z.string().min(1, "Address is required"),
+  phone: z.string().min(1, "Phone is required"),
+  email: z.string().email("Invalid email address"),
   website: z.string().optional(),
-  imageUrl: z.string().url("Invalid URL"),
-  rating: z.string().min(1, "Rating is required"),
-  reviewCount: z.coerce.number().min(0, "Review count must be 0 or greater"),
-  freeEstimate: z.boolean().default(false),
-  licensed: z.boolean().default(false),
-  serviceRadius: z.coerce.number().min(1, "Service radius must be at least 1"),
-  specialties: z.array(z.string()).optional(),
-  yearsExperience: z.coerce.number().min(0, "Years experience must be 0 or greater").optional(),
-  projectTypes: z.array(z.string()).optional()
+  imageUrl: z.string().optional(),
+  rating: z.number().min(0).max(5),
+  reviewCount: z.number().min(0),
+  freeEstimate: z.boolean(),
+  licensed: z.boolean(),
+  serviceRadius: z.number().min(1, "Service radius must be at least 1 mile"),
+  specialties: z.array(z.string()),
+  yearsExperience: z.number().min(0),
+  projectTypes: z.array(z.string())
 });
 
 const categories = [
@@ -100,7 +100,7 @@ export default function ManagerDashboard() {
       email: "",
       website: "",
       imageUrl: "",
-      rating: "5.0",
+      rating: 0,
       reviewCount: 0,
       freeEstimate: false,
       licensed: false,
@@ -113,12 +113,10 @@ export default function ManagerDashboard() {
 
   const createContractorMutation = useMutation({
     mutationFn: async (data: InsertContractor) => {
-      const response = await fetch('/api/contractors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await apiRequest("/api/contractors", {
+        method: "POST",
         body: JSON.stringify(data)
       });
-      if (!response.ok) throw new Error('Failed to create contractor');
       return response.json();
     },
     onSuccess: () => {
@@ -141,12 +139,10 @@ export default function ManagerDashboard() {
 
   const updateContractorMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: InsertContractor }) => {
-      const response = await fetch(`/api/contractors/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await apiRequest(`/api/contractors/${id}`, {
+        method: "PUT",
         body: JSON.stringify(data)
       });
-      if (!response.ok) throw new Error('Failed to update contractor');
       return response.json();
     },
     onSuccess: () => {
@@ -169,11 +165,9 @@ export default function ManagerDashboard() {
 
   const deleteContractorMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/contractors/${id}`, {
-        method: 'DELETE'
+      await apiRequest(`/api/contractors/${id}`, {
+        method: "DELETE"
       });
-      if (!response.ok) throw new Error('Failed to delete contractor');
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contractors'] });
@@ -194,16 +188,8 @@ export default function ManagerDashboard() {
   const onSubmit = (data: z.infer<typeof contractorSchema>) => {
     const contractorData: InsertContractor = {
       ...data,
-      email: data.email || null,
-      address: data.address || null,
-      phone: data.phone || null,
       website: data.website || null,
-      specialties: data.specialties || null,
-      yearsExperience: data.yearsExperience || null,
-      projectTypes: data.projectTypes || null,
-      freeEstimate: data.freeEstimate || false,
-      licensed: data.licensed || false,
-      serviceRadius: data.serviceRadius || 50
+      imageUrl: data.imageUrl || null
     };
 
     if (editingContractor) {
@@ -213,16 +199,22 @@ export default function ManagerDashboard() {
     }
   };
 
+  const resetForm = () => {
+    setEditingContractor(null);
+    form.reset();
+  };
+
   const handleEdit = (contractor: Contractor) => {
     setEditingContractor(contractor);
+    setIsAddDialogOpen(true);
     form.reset({
       name: contractor.name,
       category: contractor.category,
       description: contractor.description,
       location: contractor.location,
-      address: contractor.address || "",
-      phone: contractor.phone || "",
-      email: contractor.email || "",
+      address: contractor.address,
+      phone: contractor.phone,
+      email: contractor.email,
       website: contractor.website || "",
       imageUrl: contractor.imageUrl,
       rating: contractor.rating,
@@ -236,15 +228,10 @@ export default function ManagerDashboard() {
     });
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this contractor?')) {
-      deleteContractorMutation.mutate(id);
+  const handleDelete = (contractor: Contractor) => {
+    if (confirm(`Are you sure you want to delete ${contractor.name}?`)) {
+      deleteContractorMutation.mutate(contractor.id);
     }
-  };
-
-  const resetForm = () => {
-    setEditingContractor(null);
-    form.reset();
   };
 
   return (
@@ -286,271 +273,268 @@ export default function ManagerDashboard() {
                     {editingContractor ? 'Edit Contractor' : 'Add New Contractor'}
                   </DialogTitle>
                 </DialogHeader>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Business Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter business name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="category"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Business Name</FormLabel>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
+                              <Input placeholder="Enter business name" {...field} />
                             </FormControl>
-                            <SelectContent>
-                              {categories.map((category) => (
-                                <SelectItem key={category} value={category}>
-                                  {category}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {categories.map((category) => (
+                                  <SelectItem key={category} value={category}>
+                                    {category}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Describe the contractor's services and expertise"
-                            className="min-h-[100px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="location"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Location</FormLabel>
+                          <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Input placeholder="City, State" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Address (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Full address" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="(337) 555-0123" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="contact@business.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="website"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Website (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="www.business.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="imageUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Image URL</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://example.com/image.jpg" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="rating"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Rating</FormLabel>
-                          <FormControl>
-                            <Input placeholder="5.0" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="reviewCount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Review Count</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="0" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="serviceRadius"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Service Radius (miles)</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="50" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="yearsExperience"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Years of Experience (Optional)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="10" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex gap-6">
-                    <FormField
-                      control={form.control}
-                      name="freeEstimate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
+                            <Textarea 
+                              placeholder="Describe the business and services offered..."
+                              className="min-h-[100px]"
+                              {...field} 
                             />
                           </FormControl>
-                          <FormLabel>Offers free estimates</FormLabel>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="licensed"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel>Licensed & Insured</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Location</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Lake Charles, LA" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <div className="flex justify-end space-x-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => {
-                        setIsAddDialogOpen(false);
-                        resetForm();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      className="btn-primary"
-                      disabled={createContractorMutation.isPending || updateContractorMutation.isPending}
-                    >
-                      {editingContractor ? 'Update' : 'Add'} Contractor
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Street address" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input placeholder="(337) 555-0123" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="contact@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Website (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="https://example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="serviceRadius"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Service Radius (miles)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                placeholder="50"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="rating"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Rating (0-5)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.1"
+                                min="0"
+                                max="5"
+                                placeholder="4.5"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="reviewCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Review Count</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number"
+                                placeholder="25"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="freeEstimate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Free Estimate</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="licensed"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Licensed</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsAddDialogOpen(false);
+                          resetForm();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        className="btn-primary"
+                        disabled={createContractorMutation.isPending || updateContractorMutation.isPending}
+                      >
+                        {editingContractor ? 'Update' : 'Add'} Contractor
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="grid gap-6">
@@ -568,60 +552,77 @@ export default function ManagerDashboard() {
                   <p className="text-muted-foreground">No contractors found. Add your first contractor to get started.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid gap-4">
                   {contractors.map((contractor) => (
-                    <div key={contractor.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <img 
-                          src={contractor.imageUrl} 
-                          alt={contractor.name}
-                          className="w-16 h-16 object-cover rounded-lg"
-                        />
-                        <div>
-                          <h3 className="font-semibold text-lg">{contractor.name}</h3>
-                          <p className="text-muted-foreground">{contractor.category}</p>
-                          <div className="flex items-center space-x-4 mt-2">
-                            <div className="flex items-center">
-                              <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                              <span className="text-sm">{formatRating(contractor.rating)}</span>
+                    <div key={contractor.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-semibold">{contractor.name}</h3>
+                            <Badge variant="secondary">{contractor.category}</Badge>
+                            {contractor.licensed && <Badge variant="outline">Licensed</Badge>}
+                            {contractor.freeEstimate && <Badge variant="outline">Free Estimate</Badge>}
+                          </div>
+                          
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < Math.floor(contractor.rating)
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
                             </div>
-                            <div className="flex items-center">
-                              <MapPin className="w-4 h-4 text-muted-foreground mr-1" />
-                              <span className="text-sm">{contractor.location}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {formatRating(contractor.rating)} ({formatReviewCount(contractor.reviewCount)})
+                            </span>
+                          </div>
+
+                          <p className="text-muted-foreground mb-3 line-clamp-2">{contractor.description}</p>
+                          
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {contractor.location}
                             </div>
-                            {contractor.phone && (
-                              <div className="flex items-center">
-                                <Phone className="w-4 h-4 text-muted-foreground mr-1" />
-                                <span className="text-sm">{contractor.phone}</span>
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-4 w-4" />
+                              {contractor.phone}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-4 w-4" />
+                              {contractor.email}
+                            </div>
+                            {contractor.website && (
+                              <div className="flex items-center gap-1">
+                                <Globe className="h-4 w-4" />
+                                <span>Website</span>
                               </div>
                             )}
                           </div>
-                          <div className="flex gap-2 mt-2">
-                            {contractor.freeEstimate && (
-                              <Badge variant="secondary">Free Estimate</Badge>
-                            )}
-                            {contractor.licensed && (
-                              <Badge variant="secondary">Licensed</Badge>
-                            )}
-                          </div>
                         </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEdit(contractor)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDelete(contractor.id)}
-                          disabled={deleteContractorMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(contractor)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(contractor)}
+                            disabled={deleteContractorMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
