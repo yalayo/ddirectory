@@ -20,6 +20,9 @@ export default function Header() {
               </Link>
               <a href="#" className="text-foreground hover:text-primary transition-colors">Ideas</a>
               <a href="#" className="text-foreground hover:text-primary transition-colors">Reviews</a>
+              <Link href="/manager" className="text-foreground hover:text-primary transition-colors">
+                Manager
+              </Link>
             </nav>
           </div>
           

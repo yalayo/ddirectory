@@ -172,7 +172,10 @@ export default function ManagerDashboard() {
       website: data.website || null,
       specialties: data.specialties || null,
       yearsExperience: data.yearsExperience || null,
-      projectTypes: data.projectTypes || null
+      projectTypes: data.projectTypes || null,
+      freeEstimate: data.freeEstimate || false,
+      licensed: data.licensed || false,
+      serviceRadius: data.serviceRadius || 50
     };
 
     if (editingContractor) {
@@ -196,9 +199,9 @@ export default function ManagerDashboard() {
       imageUrl: contractor.imageUrl,
       rating: contractor.rating,
       reviewCount: contractor.reviewCount,
-      freeEstimate: contractor.freeEstimate,
-      licensed: contractor.licensed,
-      serviceRadius: contractor.serviceRadius,
+      freeEstimate: contractor.freeEstimate ?? false,
+      licensed: contractor.licensed ?? false,
+      serviceRadius: contractor.serviceRadius ?? 50,
       specialties: contractor.specialties || [],
       yearsExperience: contractor.yearsExperience || 0,
       projectTypes: contractor.projectTypes || []
