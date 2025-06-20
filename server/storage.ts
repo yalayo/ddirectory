@@ -28,6 +28,8 @@ export interface IStorage {
   getContractorsByLocation(location: string, radius?: number): Promise<Contractor[]>;
   searchContractors(query: string): Promise<Contractor[]>;
   createContractor(contractor: InsertContractor): Promise<Contractor>;
+  updateContractor(id: number, contractor: InsertContractor): Promise<Contractor>;
+  deleteContractor(id: number): Promise<void>;
 
   // Project Types
   getAllProjectTypes(): Promise<ProjectType[]>;
@@ -329,6 +331,41 @@ export class MemStorage implements IStorage {
     this.reviews.set(id, newReview);
     return newReview;
   }
+
+  async updateContractor(id: number, contractor: InsertContractor): Promise<Contractor> {
+    const existing = this.contractors.get(id);
+    if (!existing) {
+      throw new Error("Contractor not found");
+    }
+    
+    const updated: Contractor = { 
+      id,
+      name: contractor.name,
+      category: contractor.category,
+      description: contractor.description,
+      location: contractor.location,
+      imageUrl: contractor.imageUrl,
+      rating: contractor.rating,
+      address: contractor.address ?? null,
+      phone: contractor.phone ?? null,
+      email: contractor.email ?? null,
+      website: contractor.website ?? null,
+      specialties: contractor.specialties ?? null,
+      yearsExperience: contractor.yearsExperience ?? null,
+      projectTypes: contractor.projectTypes ?? null,
+      reviewCount: contractor.reviewCount ?? 0,
+      serviceRadius: contractor.serviceRadius ?? 50,
+      freeEstimate: contractor.freeEstimate ?? false,
+      licensed: contractor.licensed ?? false
+    };
+    
+    this.contractors.set(id, updated);
+    return updated;
+  }
+
+  async deleteContractor(id: number): Promise<void> {
+    this.contractors.delete(id);
+  }
 }
 
 // rewrite MemStorage to DatabaseStorage
@@ -403,6 +440,19 @@ export class DatabaseStorage implements IStorage {
       .values(review)
       .returning();
     return created;
+  }
+
+  async updateContractor(id: number, contractor: InsertContractor): Promise<Contractor> {
+    const [updated] = await db
+      .update(contractors)
+      .set(contractor)
+      .where(eq(contractors.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteContractor(id: number): Promise<void> {
+    await db.delete(contractors).where(eq(contractors.id, id));
   }
 }
 

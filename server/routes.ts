@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { insertContractorSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all contractors
@@ -68,6 +69,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reviews);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  // Create contractor
+  app.post("/api/contractors", async (req, res) => {
+    try {
+      const validatedData = insertContractorSchema.parse(req.body);
+      const contractor = await storage.createContractor(validatedData);
+      res.status(201).json(contractor);
+    } catch (error) {
+      console.error("Error creating contractor:", error);
+      res.status(400).json({ message: "Invalid contractor data" });
+    }
+  });
+
+  // Update contractor
+  app.put("/api/contractors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertContractorSchema.parse(req.body);
+      
+      const existingContractor = await storage.getContractor(id);
+      if (!existingContractor) {
+        return res.status(404).json({ message: "Contractor not found" });
+      }
+
+      const updatedContractor = await storage.updateContractor(id, validatedData);
+      res.json(updatedContractor);
+    } catch (error) {
+      console.error("Error updating contractor:", error);
+      res.status(400).json({ message: "Invalid contractor data" });
+    }
+  });
+
+  // Delete contractor
+  app.delete("/api/contractors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const contractor = await storage.getContractor(id);
+      
+      if (!contractor) {
+        return res.status(404).json({ message: "Contractor not found" });
+      }
+
+      await storage.deleteContractor(id);
+      res.json({ message: "Contractor deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting contractor:", error);
+      res.status(500).json({ message: "Failed to delete contractor" });
     }
   });
 
