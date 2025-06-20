@@ -1,8 +1,8 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Mail, Bolt, Award } from "lucide-react";
+import { Star, MapPin, Calendar, Bolt, Award } from "lucide-react";
 import { formatRating, formatReviewCount, renderStars } from "@/lib/utils";
 import type { Contractor } from "@shared/schema";
 
@@ -11,7 +11,12 @@ interface ContractorCardProps {
 }
 
 export default function ContractorCard({ contractor }: ContractorCardProps) {
+  const [, setLocation] = useLocation();
   const stars = renderStars(contractor.rating);
+
+  const handleBookService = () => {
+    setLocation(`/book-service/${contractor.id}`);
+  };
 
   return (
     <Card className="card-hover">
@@ -37,9 +42,9 @@ export default function ContractorCard({ contractor }: ContractorCardProps) {
                 </Link>
                 <p className="text-muted-foreground mt-1">{contractor.category}</p>
               </div>
-              <Button className="btn-primary">
-                <Mail className="h-4 w-4 mr-2" />
-                Send Message
+              <Button className="btn-primary" onClick={handleBookService}>
+                <Calendar className="h-4 w-4 mr-2" />
+                Book a Service
               </Button>
             </div>
 
