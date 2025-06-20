@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { 
   contractors, 
   projectTypes, 
@@ -20,6 +21,8 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  authenticateUser(username: string, password: string): Promise<User | null>;
+  createHashedUser(username: string, password: string, role?: string): Promise<User>;
 
   // Contractors
   getAllContractors(): Promise<Contractor[]>;
@@ -453,6 +456,33 @@ export class DatabaseStorage implements IStorage {
 
   async deleteContractor(id: number): Promise<void> {
     await db.delete(contractors).where(eq(contractors.id, id));
+  }
+
+  // User authentication methods
+  async authenticateUser(username: string, password: string): Promise<User | null> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    if (!user) return null;
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) return null;
+
+    return user;
+  }
+
+  async createHashedUser(username: string, password: string, role: string = "manager"): Promise<User> {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    const [user] = await db
+      .insert(users)
+      .values({
+        username,
+        password: hashedPassword,
+        role,
+      })
+      .returning();
+    
+    return user;
   }
 }
 
