@@ -271,7 +271,26 @@ export class MemStorage implements IStorage {
 
   async createContractor(contractor: InsertContractor): Promise<Contractor> {
     const id = this.currentContractorId++;
-    const newContractor: Contractor = { ...contractor, id };
+    const newContractor: Contractor = { 
+      id,
+      name: contractor.name,
+      category: contractor.category,
+      description: contractor.description,
+      location: contractor.location,
+      imageUrl: contractor.imageUrl,
+      rating: contractor.rating,
+      address: contractor.address ?? null,
+      phone: contractor.phone ?? null,
+      email: contractor.email ?? null,
+      website: contractor.website ?? null,
+      specialties: contractor.specialties ?? null,
+      yearsExperience: contractor.yearsExperience ?? null,
+      projectTypes: contractor.projectTypes ?? null,
+      reviewCount: contractor.reviewCount ?? 0,
+      serviceRadius: contractor.serviceRadius ?? 50,
+      freeEstimate: contractor.freeEstimate ?? false,
+      licensed: contractor.licensed ?? false
+    };
     this.contractors.set(id, newContractor);
     return newContractor;
   }
@@ -297,7 +316,14 @@ export class MemStorage implements IStorage {
 
   async createReview(review: InsertReview): Promise<Review> {
     const id = this.currentReviewId++;
-    const newReview: Review = { ...review, id };
+    const newReview: Review = { 
+      id,
+      contractorId: review.contractorId,
+      customerName: review.customerName,
+      rating: review.rating,
+      comment: review.comment,
+      projectType: review.projectType ?? null
+    };
     this.reviews.set(id, newReview);
     return newReview;
   }

@@ -67,11 +67,11 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium transition-colors;
+    @apply bg-primary text-primary-foreground hover:bg-primary hover:opacity-90 px-4 py-2 rounded-lg font-medium transition-colors;
   }
   
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-lg font-medium transition-colors;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary hover:opacity-80 px-4 py-2 rounded-lg font-medium transition-colors;
   }
 
   .card-hover {
