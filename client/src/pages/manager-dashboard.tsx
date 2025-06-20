@@ -62,6 +62,7 @@ export default function ManagerDashboard() {
 
   const { data: contractors = [], isLoading: contractorsLoading } = useQuery<Contractor[]>({
     queryKey: ['/api/contractors'],
+    enabled: isAuthenticated, // Only fetch when authenticated
   });
 
   // Redirect to login if not authenticated
@@ -113,10 +114,12 @@ export default function ManagerDashboard() {
 
   const createContractorMutation = useMutation({
     mutationFn: async (data: InsertContractor) => {
-      const response = await apiRequest("/api/contractors", {
+      const response = await fetch("/api/contractors", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
+      if (!response.ok) throw new Error('Failed to create contractor');
       return response.json();
     },
     onSuccess: () => {
@@ -139,10 +142,12 @@ export default function ManagerDashboard() {
 
   const updateContractorMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: InsertContractor }) => {
-      const response = await apiRequest(`/api/contractors/${id}`, {
+      const response = await fetch(`/api/contractors/${id}`, {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
+      if (!response.ok) throw new Error('Failed to update contractor');
       return response.json();
     },
     onSuccess: () => {
@@ -165,9 +170,10 @@ export default function ManagerDashboard() {
 
   const deleteContractorMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/contractors/${id}`, {
+      const response = await fetch(`/api/contractors/${id}`, {
         method: "DELETE"
       });
+      if (!response.ok) throw new Error('Failed to delete contractor');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contractors'] });
@@ -188,8 +194,8 @@ export default function ManagerDashboard() {
   const onSubmit = (data: z.infer<typeof contractorSchema>) => {
     const contractorData: InsertContractor = {
       ...data,
-      website: data.website || null,
-      imageUrl: data.imageUrl || null
+      website: data.website || undefined,
+      imageUrl: data.imageUrl || undefined
     };
 
     if (editingContractor) {
@@ -216,7 +222,7 @@ export default function ManagerDashboard() {
       phone: contractor.phone,
       email: contractor.email,
       website: contractor.website || "",
-      imageUrl: contractor.imageUrl,
+      imageUrl: contractor.imageUrl || "",
       rating: contractor.rating,
       reviewCount: contractor.reviewCount,
       freeEstimate: contractor.freeEstimate ?? false,
