@@ -72,23 +72,6 @@ export default function ManagerDashboard() {
     }
   }, [isAuthenticated, authLoading, setLocation]);
 
-  // Show loading state while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render dashboard if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
-
   const form = useForm<z.infer<typeof contractorSchema>>({
     resolver: zodResolver(contractorSchema),
     defaultValues: {
@@ -194,8 +177,9 @@ export default function ManagerDashboard() {
   const onSubmit = (data: z.infer<typeof contractorSchema>) => {
     const contractorData: InsertContractor = {
       ...data,
-      website: data.website || undefined,
-      imageUrl: data.imageUrl || undefined
+      rating: data.rating.toString(),
+      website: data.website || null,
+      imageUrl: data.imageUrl || null
     };
 
     if (editingContractor) {
@@ -218,12 +202,12 @@ export default function ManagerDashboard() {
       category: contractor.category,
       description: contractor.description,
       location: contractor.location,
-      address: contractor.address,
-      phone: contractor.phone,
-      email: contractor.email,
+      address: contractor.address || "",
+      phone: contractor.phone || "",
+      email: contractor.email || "",
       website: contractor.website || "",
       imageUrl: contractor.imageUrl || "",
-      rating: contractor.rating,
+      rating: parseFloat(contractor.rating) || 0,
       reviewCount: contractor.reviewCount,
       freeEstimate: contractor.freeEstimate ?? false,
       licensed: contractor.licensed ?? false,
@@ -239,6 +223,23 @@ export default function ManagerDashboard() {
       deleteContractorMutation.mutate(contractor.id);
     }
   };
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render dashboard if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
