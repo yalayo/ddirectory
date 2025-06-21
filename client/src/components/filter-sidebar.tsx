@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +50,12 @@ export default function FilterSidebar({
   selectedRadius,
   onRadiusChange 
 }: FilterSidebarProps) {
+  const [categorySearch, setCategorySearch] = useState("");
+
+  const filteredCategories = categories.filter(category =>
+    category.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
   return (
     <div className="lg:w-1/4">
       <div className="bg-card rounded-lg border border-border p-6 sticky top-24">
@@ -126,10 +133,12 @@ export default function FilterSidebar({
               type="text"
               placeholder="Search Professional Category"
               className="pl-8"
+              value={categorySearch}
+              onChange={(e) => setCategorySearch(e.target.value)}
             />
           </div>
           <div className="space-y-2 max-h-48 overflow-y-auto">
-            {categories.map((category) => (
+            {filteredCategories.map((category) => (
               <div key={category} className="flex items-center space-x-2">
                 <Checkbox
                   id={category}
