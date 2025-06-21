@@ -12,7 +12,7 @@ import type { Contractor, ProjectType } from "@shared/schema";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(["General Contractors"]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("Lake Charles, LA");
   const [selectedRadius, setSelectedRadius] = useState<string>("50");
   const [currentPage, setCurrentPage] = useState(1);

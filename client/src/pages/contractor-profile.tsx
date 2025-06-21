@@ -1,16 +1,17 @@
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Phone, Mail, Globe, Award, Bolt, Calendar } from "lucide-react";
+import { Star, MapPin, Phone, Mail, Globe, Award, Bolt, Calendar, ArrowLeft } from "lucide-react";
 import { formatRating, formatReviewCount, renderStars } from "@/lib/utils";
 import type { Contractor } from "@shared/schema";
 
 export default function ContractorProfile() {
   const { id } = useParams();
+  const [, setLocation] = useLocation();
   
   const { data: contractor, isLoading } = useQuery<Contractor>({
     queryKey: ['/api/contractors', id],
@@ -52,6 +53,16 @@ export default function ContractorProfile() {
       <Header />
       
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => setLocation('/')}
+          className="mb-6 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Search
+        </Button>
+        
         <Card>
           <CardContent className="p-8">
             <div className="grid md:grid-cols-3 gap-8">

@@ -152,8 +152,7 @@ export default function FilterSidebar({
                     if (checked) {
                       onCategoryChange([...selectedCategories, category]);
                     } else {
-                      const newCategories = selectedCategories.filter(c => c !== category);
-                      onCategoryChange(newCategories.length > 0 ? newCategories : ["General Contractors"]);
+                      onCategoryChange(selectedCategories.filter(c => c !== category));
                     }
                   }}
                   className="filter-checkbox"
