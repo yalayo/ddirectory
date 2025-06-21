@@ -82,9 +82,12 @@ export default function ContractorProfile() {
                     <h1 className="text-3xl font-bold text-foreground mb-2">{contractor.name}</h1>
                     <p className="text-lg text-muted-foreground mb-4">{contractor.category}</p>
                   </div>
-                  <Button className="btn-primary">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Message
+                  <Button 
+                    className="btn-primary"
+                    onClick={() => setLocation(`/book-service/${contractor.id}`)}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Book a Service
                   </Button>
                 </div>
 
