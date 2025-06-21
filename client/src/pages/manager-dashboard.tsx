@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Edit, Trash2, Star, MapPin, Phone, Mail, Globe, LogOut } from "lucide-react";
@@ -135,8 +135,8 @@ export default function ManagerDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contractors'] });
-      setEditingContractor(null);
-      form.reset();
+      setIsAddDialogOpen(false);
+      resetForm();
       toast({
         title: "Success",
         description: "Contractor updated successfully",
@@ -279,6 +279,9 @@ export default function ManagerDashboard() {
                   <DialogTitle>
                     {editingContractor ? 'Edit Contractor' : 'Add New Contractor'}
                   </DialogTitle>
+                  <DialogDescription>
+                    {editingContractor ? 'Update contractor information and settings.' : 'Add a new contractor to your directory.'}
+                  </DialogDescription>
                 </DialogHeader>
                 
                 <Form {...form}>
@@ -304,7 +307,7 @@ export default function ManagerDashboard() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select category" />
@@ -577,7 +580,7 @@ export default function ManagerDashboard() {
                                 <Star
                                   key={i}
                                   className={`h-4 w-4 ${
-                                    i < Math.floor(contractor.rating)
+                                    i < Math.floor(parseFloat(contractor.rating))
                                       ? "fill-yellow-400 text-yellow-400"
                                       : "text-gray-300"
                                   }`}
