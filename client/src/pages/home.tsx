@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/header";
 import ProjectTypeSelector from "@/components/project-type-selector";
@@ -33,6 +33,11 @@ export default function Home() {
       return response.json();
     }
   });
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategories, selectedLocation, searchQuery, selectedRadius]);
 
   // Pagination logic
   const totalPages = Math.ceil(allContractors.length / contractorsPerPage);

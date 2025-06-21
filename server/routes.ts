@@ -98,9 +98,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let contractors = await storage.getAllContractors();
 
-      // Apply filters
-      if (category && typeof category === 'string') {
-        contractors = await storage.getContractorsByCategory(category);
+      // Apply category filters (support multiple categories)
+      if (category) {
+        const categories = Array.isArray(category) ? category : [category];
+        const categoryFiltered: any[] = [];
+        
+        for (const cat of categories) {
+          if (typeof cat === 'string') {
+            const catContractors = await storage.getContractorsByCategory(cat);
+            categoryFiltered.push(...catContractors);
+          }
+        }
+        
+        // Remove duplicates based on ID
+        contractors = categoryFiltered.filter((contractor, index, self) => 
+          index === self.findIndex(c => c.id === contractor.id)
+        );
       }
 
       if (location && typeof location === 'string') {
