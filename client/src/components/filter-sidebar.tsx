@@ -57,13 +57,26 @@ export default function FilterSidebar({
           <div className="flex flex-wrap gap-2">
             <Badge className="bg-primary text-primary-foreground">
               {selectedLocation} / {selectedRadius}
-              <Button variant="ghost" size="sm" className="ml-2 h-auto p-0 text-primary-foreground hover:text-primary-foreground/80">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-2 h-auto p-0 text-primary-foreground hover:text-primary-foreground/80"
+                onClick={() => {
+                  onLocationChange("Lake Charles, LA");
+                  onRadiusChange("50");
+                }}
+              >
                 <X className="h-3 w-3" />
               </Button>
             </Badge>
             <Badge className="bg-primary text-primary-foreground">
               {selectedCategory}
-              <Button variant="ghost" size="sm" className="ml-2 h-auto p-0 text-primary-foreground hover:text-primary-foreground/80">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-2 h-auto p-0 text-primary-foreground hover:text-primary-foreground/80"
+                onClick={() => onCategoryChange("General Contractors")}
+              >
                 <X className="h-3 w-3" />
               </Button>
             </Badge>
