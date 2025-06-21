@@ -12,16 +12,18 @@ import type { Contractor, ProjectType } from "@shared/schema";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("General Contractors");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(["General Contractors"]);
   const [selectedLocation, setSelectedLocation] = useState<string>("Lake Charles, LA");
   const [selectedRadius, setSelectedRadius] = useState<string>("50");
+  const [currentPage, setCurrentPage] = useState(1);
+  const contractorsPerPage = 6;
 
   // Fetch contractors with filters
-  const { data: contractors = [], isLoading: contractorsLoading } = useQuery<Contractor[]>({
-    queryKey: ['/api/contractors', selectedCategory, selectedLocation, searchQuery, selectedRadius],
+  const { data: allContractors = [], isLoading: contractorsLoading } = useQuery<Contractor[]>({
+    queryKey: ['/api/contractors', selectedCategories, selectedLocation, searchQuery, selectedRadius],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedCategory) params.append('category', selectedCategory);
+      selectedCategories.forEach(category => params.append('category', category));
       if (selectedLocation) params.append('location', selectedLocation);
       if (searchQuery) params.append('search', searchQuery);
       if (selectedRadius) params.append('radius', selectedRadius);
@@ -31,6 +33,11 @@ export default function Home() {
       return response.json();
     }
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(allContractors.length / contractorsPerPage);
+  const startIndex = (currentPage - 1) * contractorsPerPage;
+  const contractors = allContractors.slice(startIndex, startIndex + contractorsPerPage);
 
   // Fetch project types
   const { data: projectTypes = [] } = useQuery<ProjectType[]>({
@@ -47,8 +54,8 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row gap-8">
           
           <FilterSidebar 
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
+            selectedCategories={selectedCategories}
+            onCategoryChange={setSelectedCategories}
             selectedLocation={selectedLocation}
             onLocationChange={setSelectedLocation}
             selectedRadius={selectedRadius}
@@ -88,16 +95,35 @@ export default function Home() {
             </div>
 
             {/* Pagination */}
-            {contractors.length > 0 && (
+            {allContractors.length > contractorsPerPage && (
               <div className="mt-8 flex justify-center">
                 <nav className="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button variant="default" size="sm">1</Button>
-                  <Button variant="ghost" size="sm">2</Button>
-                  <Button variant="ghost" size="sm">3</Button>
-                  <Button variant="ghost" size="sm">
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </nav>

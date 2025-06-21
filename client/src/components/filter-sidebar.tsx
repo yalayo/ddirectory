@@ -8,8 +8,8 @@ import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface FilterSidebarProps {
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
+  selectedCategories: string[];
+  onCategoryChange: (categories: string[]) => void;
   selectedLocation: string;
   onLocationChange: (location: string) => void;
   selectedRadius: string;
@@ -43,7 +43,7 @@ const radiusOptions = [
 ];
 
 export default function FilterSidebar({ 
-  selectedCategory,
+  selectedCategories,
   onCategoryChange,
   selectedLocation, 
   onLocationChange,
@@ -76,17 +76,22 @@ export default function FilterSidebar({
                 <X className="h-3 w-3" />
               </Button>
             </Badge>
-            <Badge className="bg-primary text-primary-foreground">
-              {selectedCategory}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="ml-2 h-auto p-0 text-primary-foreground hover:text-primary-foreground/80"
-                onClick={() => onCategoryChange("General Contractors")}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
+            {selectedCategories.map((category) => (
+              <Badge key={category} className="bg-primary text-primary-foreground">
+                {category}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="ml-2 h-auto p-0 text-primary-foreground hover:text-primary-foreground/80"
+                  onClick={() => {
+                    const newCategories = selectedCategories.filter(c => c !== category);
+                    onCategoryChange(newCategories.length > 0 ? newCategories : ["General Contractors"]);
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
           </div>
         </div>
 
@@ -142,10 +147,13 @@ export default function FilterSidebar({
               <div key={category} className="flex items-center space-x-2">
                 <Checkbox
                   id={category}
-                  checked={selectedCategory === category}
+                  checked={selectedCategories.includes(category)}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      onCategoryChange(category);
+                      onCategoryChange([...selectedCategories, category]);
+                    } else {
+                      const newCategories = selectedCategories.filter(c => c !== category);
+                      onCategoryChange(newCategories.length > 0 ? newCategories : ["General Contractors"]);
                     }
                   }}
                   className="filter-checkbox"
