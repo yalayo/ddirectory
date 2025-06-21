@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, ChevronLeft, ChevronRight, Zap, Droplets, HardHat, CheckCircle, Clock, User, Phone, Mail, MapPin } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight, Zap, Droplets, HardHat, CheckCircle, Clock, User, Phone, Mail, MapPin, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Contractor } from "@shared/schema";
@@ -252,20 +252,27 @@ export default function BookService() {
                               <Card
                                 key={service.id}
                                 className={cn(
-                                  "cursor-pointer transition-all border-2",
+                                  "cursor-pointer transition-all border-2 relative",
                                   field.value === service.id 
-                                    ? "border-primary bg-primary/5" 
-                                    : "border-border hover:border-primary/50",
-                                  service.color
+                                    ? "border-amber-400 bg-amber-50/50" 
+                                    : "border-gray-200 hover:border-amber-300"
                                 )}
                                 onClick={() => field.onChange(service.id)}
                               >
                                 <CardContent className="p-6 text-center">
                                   {field.value === service.id && (
-                                    <CheckCircle className="w-5 h-5 text-primary absolute top-2 right-2" />
+                                    <div className="absolute top-3 right-3 w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center">
+                                      <CheckCircle className="w-4 h-4 text-white fill-amber-400" />
+                                    </div>
                                   )}
-                                  <div className="w-16 h-16 mx-auto mb-4 bg-white rounded-full flex items-center justify-center">
-                                    <Icon className="w-8 h-8 text-gray-600" />
+                                  <div className={cn(
+                                    "w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center",
+                                    field.value === service.id ? "bg-amber-400" : "bg-gray-200"
+                                  )}>
+                                    <Icon className={cn(
+                                      "w-8 h-8",
+                                      field.value === service.id ? "text-white" : "text-gray-600"
+                                    )} />
                                   </div>
                                   <h3 className="font-semibold text-lg mb-2">{service.name}</h3>
                                   <p className="text-sm text-muted-foreground">{service.description}</p>
@@ -275,11 +282,23 @@ export default function BookService() {
                           })}
                         </div>
                         <FormMessage />
+                        {field.value && (
+                          <div className="mt-4 text-center">
+                            <p className="text-sm text-muted-foreground">
+                              You selected: <span className="text-amber-600 font-medium capitalize">{field.value}</span> service
+                            </p>
+                          </div>
+                        )}
                       </FormItem>
                     )}
                   />
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-between">
+                    <Link href="/">
+                      <Button type="button" variant="outline">
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Contractors
+                      </Button>
+                    </Link>
                     <Button type="submit" className="btn-primary">
                       Next <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
