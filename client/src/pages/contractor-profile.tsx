@@ -1,11 +1,11 @@
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Phone, Mail, Globe, Award, Bolt, Calendar, ArrowLeft } from "lucide-react";
+import { Star, MapPin, Phone, Mail, Globe, Award, Bolt, Calendar, ArrowLeft, Users, Eye, Shield } from "lucide-react";
 import { formatRating, formatReviewCount, renderStars } from "@/lib/utils";
 import type { Contractor } from "@shared/schema";
 
@@ -20,6 +20,14 @@ export default function ContractorProfile() {
       if (!response.ok) throw new Error('Failed to fetch contractor');
       return response.json();
     }
+  });
+
+  const { data: leads = [] } = useQuery({
+    queryKey: [`/api/contractors/${id}/leads`],
+  });
+
+  const { data: subscription } = useQuery({
+    queryKey: [`/api/contractors/${id}/subscription`],
   });
 
   if (isLoading) {
@@ -91,20 +99,44 @@ export default function ContractorProfile() {
                   </Button>
                 </div>
 
-                {/* Rating */}
-                <div className="flex items-center mb-4">
-                  <div className="flex text-accent-green mr-2">
-                    {[...Array(stars.full)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-current" />
-                    ))}
-                    {stars.half > 0 && <Star className="h-5 w-5 fill-current opacity-50" />}
-                    {[...Array(stars.empty)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5" />
-                    ))}
+                {/* Rating and Lead Info */}
+                <div className="flex items-center gap-6 mb-4">
+                  <div className="flex items-center">
+                    <div className="flex text-accent-green mr-2">
+                      {[...Array(stars.full)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 fill-current" />
+                      ))}
+                      {stars.half > 0 && <Star className="h-5 w-5 fill-current opacity-50" />}
+                      {[...Array(stars.empty)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5" />
+                      ))}
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {formatRating(contractor.rating)} ({formatReviewCount(contractor.reviewCount)})
+                    </span>
                   </div>
-                  <span className="text-sm text-muted-foreground">
-                    {formatRating(contractor.rating)} ({formatReviewCount(contractor.reviewCount)})
-                  </span>
+                  
+                  {leads.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-purple-600" />
+                      <Link href={`/leads?contractor=${contractor.id}`}>
+                        <button className="font-medium text-purple-600 hover:text-purple-700 hover:underline flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          {leads.length} leads
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                  
+                  {subscription && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Shield className="h-4 w-4 text-blue-600" />
+                      <span className="text-blue-600 font-medium">{subscription.plan.name} Plan</span>
+                      <span className="text-muted-foreground">
+                        ({subscription.subscription.leadsUsed}/{subscription.plan.monthlyLeads} monthly)
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Badges */}
