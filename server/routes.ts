@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
 import { insertContractorSchema } from "@shared/schema";
+import { scrapeHouzzContractors } from "./scraper";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session configuration
@@ -241,6 +242,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Scraper endpoint for admin users
+  app.post("/api/contractors/scrape", async (req: any, res) => {
+    try {
+      // Check if user is logged in (for now, allow any authenticated session)
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = req.session.user;
+      if (user.role !== 'manager') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const scrapedContractors = await scrapeHouzzContractors();
+      let addedCount = 0;
+
+      for (const contractorData of scrapedContractors) {
+        try {
+          await storage.createContractor(contractorData);
+          addedCount++;
+        } catch (error) {
+          console.log(`Skipped duplicate contractor: ${contractorData.name}`);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        count: addedCount,
+        total: scrapedContractors.length,
+        message: `Successfully added ${addedCount} new contractors from Houzz`
+      });
+    } catch (error) {
+      console.error("Error scraping contractors:", error);
+      res.status(500).json({ message: "Failed to scrape contractors" });
     }
   });
 
