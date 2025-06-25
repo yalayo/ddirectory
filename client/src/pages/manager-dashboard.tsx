@@ -16,11 +16,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Edit, Trash2, Star, MapPin, Phone, Mail, Globe, LogOut, Download } from "lucide-react";
+import { Plus, Edit, Trash2, Star, MapPin, Phone, Mail, Globe, LogOut, Download, Eye, CreditCard, TrendingUp } from "lucide-react";
 import { formatRating, formatReviewCount } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "wouter";
 import type { Contractor, InsertContractor } from "@shared/schema";
 
 const contractorSchema = z.object({
