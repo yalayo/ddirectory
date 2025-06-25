@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
 import { insertContractorSchema, insertLeadSchema } from "@shared/schema";
-// Removed cheerio import - using direct contractor data instead
+import * as cheerio from "cheerio";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -260,14 +260,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        // Fetch Houzz Lake Charles contractors page using HTTP request
-        const response = await fetch('https://www.houzz.com/professionals/general-contractor/lake-charles-la-us-lkch', {
+        // Fetch contractors from the specific Houzz Lake Charles page
+        const response = await fetch('https://www.houzz.com/professionals/general-contractor/lake-charles-la-us-probr0-bo~t_11786~r_4330236', {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
             'Connection': 'keep-alive',
+            'Cache-Control': 'no-cache',
           }
         });
 
