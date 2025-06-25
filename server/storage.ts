@@ -41,6 +41,25 @@ export interface IStorage {
   // Reviews
   getReviewsByContractor(contractorId: number): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
+
+  // Plans
+  getAllPlans(): Promise<Plan[]>;
+  getPlan(id: number): Promise<Plan | undefined>;
+  createPlan(plan: InsertPlan): Promise<Plan>;
+  updatePlan(id: number, plan: InsertPlan): Promise<Plan>;
+
+  // Contractor Subscriptions
+  getContractorSubscription(contractorId: number): Promise<ContractorSubscription | undefined>;
+  createContractorSubscription(subscription: InsertContractorSubscription): Promise<ContractorSubscription>;
+  updateContractorSubscription(id: number, subscription: Partial<InsertContractorSubscription>): Promise<ContractorSubscription>;
+  getSubscriptionWithPlan(contractorId: number): Promise<{subscription: ContractorSubscription, plan: Plan} | undefined>;
+
+  // Leads
+  getAllLeads(): Promise<Lead[]>;
+  getLeadsByContractor(contractorId: number): Promise<Lead[]>;
+  createLead(lead: InsertLead): Promise<Lead>;
+  updateLeadStatus(id: number, status: string): Promise<Lead>;
+  getLeadsCount(contractorId: number, month?: number, year?: number): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -48,23 +67,37 @@ export class MemStorage implements IStorage {
   private contractors: Map<number, Contractor>;
   private projectTypes: Map<number, ProjectType>;
   private reviews: Map<number, Review>;
+  private plans: Map<number, Plan>;
+  private contractorSubscriptions: Map<number, ContractorSubscription>;
+  private leads: Map<number, Lead>;
   private currentUserId: number;
   private currentContractorId: number;
   private currentProjectTypeId: number;
   private currentReviewId: number;
+  private currentPlanId: number;
+  private currentSubscriptionId: number;
+  private currentLeadId: number;
 
   constructor() {
     this.users = new Map();
     this.contractors = new Map();
     this.projectTypes = new Map();
     this.reviews = new Map();
+    this.plans = new Map();
+    this.contractorSubscriptions = new Map();
+    this.leads = new Map();
     this.currentUserId = 1;
     this.currentContractorId = 1;
     this.currentProjectTypeId = 1;
     this.currentReviewId = 1;
+    this.currentPlanId = 1;
+    this.currentSubscriptionId = 1;
+    this.currentLeadId = 1;
 
     // Initialize with sample data
     this.initializeData();
+    this.initializePlans();
+    this.initializeSubscriptions();
   }
 
   private initializeData() {
@@ -226,6 +259,65 @@ export class MemStorage implements IStorage {
     });
   }
 
+  private initializePlans() {
+    const samplePlans: Omit<Plan, 'id' | 'createdAt'>[] = [
+      {
+        name: "Basic",
+        monthlyLeads: 5,
+        price: "29.99",
+        features: ["5 leads per month", "Basic profile listing", "Email support"],
+        isActive: true,
+      },
+      {
+        name: "Professional",
+        monthlyLeads: 15,
+        price: "79.99",
+        features: ["15 leads per month", "Featured profile", "Priority support", "Lead analytics"],
+        isActive: true,
+      },
+      {
+        name: "Premium",
+        monthlyLeads: 50,
+        price: "199.99",
+        features: ["50 leads per month", "Top placement", "24/7 support", "Advanced analytics", "Custom branding"],
+        isActive: true,
+      },
+    ];
+
+    samplePlans.forEach(plan => {
+      const newPlan: Plan = { 
+        ...plan, 
+        id: this.currentPlanId++,
+        createdAt: new Date().toISOString()
+      };
+      this.plans.set(newPlan.id, newPlan);
+    });
+  }
+
+  private initializeSubscriptions() {
+    // Give first few contractors sample subscriptions
+    const subscriptions = [
+      { contractorId: 1, planId: 2 }, // Professional
+      { contractorId: 2, planId: 1 }, // Basic
+      { contractorId: 3, planId: 3 }, // Premium
+      { contractorId: 4, planId: 2 }, // Professional
+    ];
+
+    subscriptions.forEach(sub => {
+      const newSub: ContractorSubscription = {
+        id: this.currentSubscriptionId++,
+        contractorId: sub.contractorId,
+        planId: sub.planId,
+        startDate: new Date().toISOString(),
+        endDate: null,
+        isActive: true,
+        leadsUsed: Math.floor(Math.random() * 10),
+        createdAt: new Date().toISOString(),
+      };
+      this.contractorSubscriptions.set(newSub.id, newSub);
+    });
+  }
+
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
@@ -369,6 +461,142 @@ export class MemStorage implements IStorage {
 
   async deleteContractor(id: number): Promise<void> {
     this.contractors.delete(id);
+  }
+
+  // Plan methods
+  async getAllPlans(): Promise<Plan[]> {
+    return Array.from(this.plans.values()).sort((a, b) => a.id - b.id);
+  }
+
+  async getPlan(id: number): Promise<Plan | undefined> {
+    return this.plans.get(id);
+  }
+
+  async createPlan(plan: InsertPlan): Promise<Plan> {
+    const id = this.currentPlanId++;
+    const newPlan: Plan = {
+      ...plan,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.plans.set(id, newPlan);
+    return newPlan;
+  }
+
+  async updatePlan(id: number, plan: InsertPlan): Promise<Plan> {
+    const existing = this.plans.get(id);
+    if (!existing) {
+      throw new Error("Plan not found");
+    }
+    
+    const updated: Plan = {
+      ...existing,
+      ...plan,
+    };
+    this.plans.set(id, updated);
+    return updated;
+  }
+
+  // Contractor Subscription methods
+  async getContractorSubscription(contractorId: number): Promise<ContractorSubscription | undefined> {
+    return Array.from(this.contractorSubscriptions.values())
+      .find(sub => sub.contractorId === contractorId && sub.isActive);
+  }
+
+  async createContractorSubscription(subscription: InsertContractorSubscription): Promise<ContractorSubscription> {
+    const id = this.currentSubscriptionId++;
+    const newSubscription: ContractorSubscription = {
+      ...subscription,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.contractorSubscriptions.set(id, newSubscription);
+    return newSubscription;
+  }
+
+  async updateContractorSubscription(id: number, subscription: Partial<InsertContractorSubscription>): Promise<ContractorSubscription> {
+    const existing = this.contractorSubscriptions.get(id);
+    if (!existing) {
+      throw new Error("Subscription not found");
+    }
+    
+    const updated: ContractorSubscription = {
+      ...existing,
+      ...subscription,
+    };
+    this.contractorSubscriptions.set(id, updated);
+    return updated;
+  }
+
+  async getSubscriptionWithPlan(contractorId: number): Promise<{subscription: ContractorSubscription, plan: Plan} | undefined> {
+    const subscription = await this.getContractorSubscription(contractorId);
+    if (!subscription) return undefined;
+    
+    const plan = await this.getPlan(subscription.planId);
+    if (!plan) return undefined;
+    
+    return { subscription, plan };
+  }
+
+  // Lead methods
+  async getAllLeads(): Promise<Lead[]> {
+    return Array.from(this.leads.values()).sort((a, b) => b.id - a.id);
+  }
+
+  async getLeadsByContractor(contractorId: number): Promise<Lead[]> {
+    return Array.from(this.leads.values())
+      .filter(lead => lead.contractorId === contractorId)
+      .sort((a, b) => b.id - a.id);
+  }
+
+  async createLead(lead: InsertLead): Promise<Lead> {
+    const id = this.currentLeadId++;
+    const now = new Date().toISOString();
+    const newLead: Lead = {
+      ...lead,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.leads.set(id, newLead);
+    
+    // Increment leads used for contractor
+    const subscription = await this.getContractorSubscription(lead.contractorId);
+    if (subscription) {
+      await this.updateContractorSubscription(subscription.id, {
+        leadsUsed: (subscription.leadsUsed || 0) + 1
+      });
+    }
+    
+    return newLead;
+  }
+
+  async updateLeadStatus(id: number, status: string): Promise<Lead> {
+    const existing = this.leads.get(id);
+    if (!existing) {
+      throw new Error("Lead not found");
+    }
+    
+    const updated: Lead = {
+      ...existing,
+      status,
+      updatedAt: new Date().toISOString(),
+    };
+    this.leads.set(id, updated);
+    return updated;
+  }
+
+  async getLeadsCount(contractorId: number, month?: number, year?: number): Promise<number> {
+    const leads = await this.getLeadsByContractor(contractorId);
+    
+    if (month === undefined || year === undefined) {
+      return leads.length;
+    }
+    
+    return leads.filter(lead => {
+      const createdDate = new Date(lead.createdAt);
+      return createdDate.getMonth() === month && createdDate.getFullYear() === year;
+    }).length;
   }
 }
 

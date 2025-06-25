@@ -76,3 +76,72 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// Subscription plans for contractors
+export const plans = pgTable("plans", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  monthlyLeads: integer("monthly_leads").notNull(),
+  price: text("price").notNull(),
+  features: text("features", { mode: "json" }).$type<string[]>(),
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+});
+
+// Contractor subscriptions
+export const contractorSubscriptions = pgTable("contractor_subscriptions", {
+  id: integer("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  planId: integer("plan_id").references(() => plans.id).notNull(),
+  startDate: text("start_date").$defaultFn(() => new Date().toISOString()),
+  endDate: text("end_date"),
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  leadsUsed: integer("leads_used").default(0),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+});
+
+// Leads from booking form submissions
+export const leads = pgTable("leads", {
+  id: integer("id").primaryKey(),
+  contractorId: integer("contractor_id").references(() => contractors.id).notNull(),
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone"),
+  projectType: text("project_type").notNull(),
+  projectDescription: text("project_description"),
+  budget: text("budget"),
+  timeline: text("timeline"),
+  address: text("address"),
+  status: text("status").default("new"),
+  source: text("source").default("book_service_form"),
+  createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at").$defaultFn(() => new Date().toISOString()),
+});
+
+// Plan schemas
+export const insertPlanSchema = createInsertSchema(plans).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPlan = z.infer<typeof insertPlanSchema>;
+export type Plan = typeof plans.$inferSelect;
+
+// Contractor subscription schemas
+export const insertContractorSubscriptionSchema = createInsertSchema(contractorSubscriptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertContractorSubscription = z.infer<typeof insertContractorSubscriptionSchema>;
+export type ContractorSubscription = typeof contractorSubscriptions.$inferSelect;
+
+// Lead schemas
+export const insertLeadSchema = createInsertSchema(leads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertLead = z.infer<typeof insertLeadSchema>;
+export type Lead = typeof leads.$inferSelect;
