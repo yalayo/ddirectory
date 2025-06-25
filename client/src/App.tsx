@@ -19,6 +19,7 @@ function Router() {
       <Route path="/book/:contractorId" component={BookService} />
       <Route path="/manager/login" component={ManagerLogin} />
       <Route path="/manager/dashboard" component={ManagerDashboard} />
+      <Route path="/manager" component={ManagerDashboard} />
       <Route path="/leads" component={LeadsManagement} />
       <Route component={NotFound} />
     </Switch>

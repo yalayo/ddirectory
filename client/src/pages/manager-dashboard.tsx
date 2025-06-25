@@ -707,7 +707,77 @@ export default function ManagerDashboard() {
         </div>
       </div>
 
-      <Footer />
     </div>
+  );
+}
+
+function ContractorStatsCard({ contractor }) {
+  const { data: subscription } = useQuery({
+    queryKey: [`/api/contractors/${contractor.id}/subscription`],
+  });
+
+  const { data: leads = [] } = useQuery({
+    queryKey: [`/api/contractors/${contractor.id}/leads`],
+  });
+
+  if (!subscription) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{contractor.name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">
+            <CreditCard className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">No subscription plan</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const { subscription: sub, plan } = subscription;
+  const leadProgress = (sub.leadsUsed / plan.monthlyLeads) * 100;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">{contractor.name}</CardTitle>
+        <div className="flex items-center justify-between">
+          <Badge variant="outline">{plan.name} Plan</Badge>
+          <span className="text-sm text-muted-foreground">${plan.price}/month</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Monthly Leads</span>
+              <span>{sub.leadsUsed}/{plan.monthlyLeads}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className={`h-2 rounded-full ${
+                  leadProgress >= 100 ? 'bg-red-500' : leadProgress >= 80 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(leadProgress, 100)}%` }}
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1">
+              <TrendingUp className="w-4 h-4" />
+              Total Leads
+            </span>
+            <span className="font-medium">{leads.length}</span>
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            Plan started: {new Date(sub.startDate).toLocaleDateString()}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
