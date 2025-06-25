@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
 import { insertContractorSchema, insertLeadSchema } from "@shared/schema";
-import * as cheerio from "cheerio";
+// Removed cheerio import - using direct contractor data instead
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -544,8 +544,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
     } catch (error) {
-      console.error("Error scraping contractors:", error);
-      res.status(500).json({ message: "Failed to scrape contractors" });
+      console.error("Error adding contractors:", error);
+      res.status(500).json({ message: "Failed to add contractors" });
     }
   });
 
