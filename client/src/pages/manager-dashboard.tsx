@@ -191,7 +191,25 @@ export default function ManagerDashboard() {
 
   const resetForm = () => {
     setEditingContractor(null);
-    form.reset();
+    form.reset({
+      name: "",
+      category: "",
+      description: "",
+      location: "",
+      address: "",
+      phone: "",
+      email: "",
+      website: "",
+      imageUrl: "",
+      rating: 0,
+      reviewCount: 0,
+      freeEstimate: false,
+      licensed: false,
+      serviceRadius: 50,
+      specialties: [],
+      yearsExperience: 0,
+      projectTypes: []
+    });
   };
 
   const handleEdit = (contractor: Contractor) => {
@@ -265,7 +283,8 @@ export default function ManagerDashboard() {
             <Dialog open={isAddDialogOpen || !!editingContractor} onOpenChange={(open) => {
               if (!open) {
                 setIsAddDialogOpen(false);
-                resetForm();
+                setEditingContractor(null);
+                form.reset();
               }
             }}>
               <DialogTrigger asChild>
