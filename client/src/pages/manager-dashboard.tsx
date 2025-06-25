@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Edit, Trash2, Star, MapPin, Phone, Mail, Globe, LogOut } from "lucide-react";
+import { Plus, Edit, Trash2, Star, MapPin, Phone, Mail, Globe, LogOut, Download } from "lucide-react";
 import { formatRating, formatReviewCount } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -63,6 +63,7 @@ export default function ManagerDashboard() {
   const { data: contractors = [], isLoading: contractorsLoading } = useQuery<Contractor[]>({
     queryKey: ['/api/contractors'],
     enabled: isAuthenticated, // Only fetch when authenticated
+    select: (data) => data.sort((a, b) => a.id - b.id), // Maintain consistent ordering by ID
   });
 
   // Redirect to login if not authenticated
@@ -174,6 +175,31 @@ export default function ManagerDashboard() {
     }
   });
 
+  const scrapeContractorsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/contractors/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error('Failed to scrape contractors');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/contractors'] });
+      toast({
+        title: "Success",
+        description: `Successfully scraped ${data.count || 0} contractors from Houzz`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to scrape contractors",
+        variant: "destructive",
+      });
+    }
+  });
+
   const onSubmit = (data: z.infer<typeof contractorSchema>) => {
     const contractorData: InsertContractor = {
       ...data,
@@ -280,20 +306,30 @@ export default function ManagerDashboard() {
               <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
-            <Dialog open={isAddDialogOpen || !!editingContractor} onOpenChange={(open) => {
-              if (!open) {
-                setIsAddDialogOpen(false);
-                setEditingContractor(null);
-                form.reset();
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setIsAddDialogOpen(true)} className="btn-primary">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Contractor
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => scrapeContractorsMutation.mutate()}
+                disabled={scrapeContractorsMutation.isPending}
+                variant="outline"
+                className="border-accent-green text-accent-green hover:bg-accent-green hover:text-white"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {scrapeContractorsMutation.isPending ? 'Scraping...' : 'Scrape Houzz'}
+              </Button>
+              <Dialog open={isAddDialogOpen || !!editingContractor} onOpenChange={(open) => {
+                if (!open) {
+                  setIsAddDialogOpen(false);
+                  setEditingContractor(null);
+                  form.reset();
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button onClick={() => setIsAddDialogOpen(true)} className="btn-primary">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Contractor
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingContractor ? 'Edit Contractor' : 'Add New Contractor'}
@@ -561,8 +597,9 @@ export default function ManagerDashboard() {
                     </div>
                   </form>
                 </Form>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
 
