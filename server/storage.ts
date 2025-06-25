@@ -246,7 +246,7 @@ export class MemStorage implements IStorage {
 
   // Contractor methods
   async getAllContractors(): Promise<Contractor[]> {
-    return Array.from(this.contractors.values());
+    return Array.from(this.contractors.values()).sort((a, b) => a.id - b.id);
   }
 
   async getContractor(id: number): Promise<Contractor | undefined> {
@@ -254,26 +254,27 @@ export class MemStorage implements IStorage {
   }
 
   async getContractorsByCategory(category: string): Promise<Contractor[]> {
-    return Array.from(this.contractors.values()).filter(
-      contractor => contractor.category.toLowerCase().includes(category.toLowerCase())
-    );
+    return Array.from(this.contractors.values())
+      .filter(contractor => contractor.category.toLowerCase().includes(category.toLowerCase()))
+      .sort((a, b) => a.id - b.id);
   }
 
   async getContractorsByLocation(location: string, radius?: number): Promise<Contractor[]> {
-    return Array.from(this.contractors.values()).filter(
-      contractor => contractor.location.toLowerCase().includes(location.toLowerCase())
-    );
+    return Array.from(this.contractors.values())
+      .filter(contractor => contractor.location.toLowerCase().includes(location.toLowerCase()))
+      .sort((a, b) => a.id - b.id);
   }
 
   async searchContractors(query: string): Promise<Contractor[]> {
     const searchTerm = query.toLowerCase();
-    return Array.from(this.contractors.values()).filter(
-      contractor => 
+    return Array.from(this.contractors.values())
+      .filter(contractor => 
         contractor.name.toLowerCase().includes(searchTerm) ||
         contractor.category.toLowerCase().includes(searchTerm) ||
         contractor.description.toLowerCase().includes(searchTerm) ||
         contractor.specialties?.some(spec => spec.toLowerCase().includes(searchTerm))
-    );
+      )
+      .sort((a, b) => a.id - b.id);
   }
 
   async createContractor(contractor: InsertContractor): Promise<Contractor> {
