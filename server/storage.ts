@@ -4,6 +4,9 @@ import {
   projectTypes, 
   reviews, 
   users,
+  plans,
+  contractorSubscriptions,
+  leads,
   type Contractor, 
   type InsertContractor,
   type ProjectType,
@@ -11,7 +14,13 @@ import {
   type Review,
   type InsertReview,
   type User, 
-  type InsertUser 
+  type InsertUser,
+  type Plan,
+  type InsertPlan,
+  type ContractorSubscription,
+  type InsertContractorSubscription,
+  type Lead,
+  type InsertLead
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -712,6 +721,104 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return user;
+  }
+
+  // Plans
+  async getAllPlans(): Promise<Plan[]> {
+    return await db.select().from(plans).orderBy(plans.id);
+  }
+
+  async getPlan(id: number): Promise<Plan | undefined> {
+    const [plan] = await db.select().from(plans).where(eq(plans.id, id));
+    return plan || undefined;
+  }
+
+  async createPlan(plan: InsertPlan): Promise<Plan> {
+    const [newPlan] = await db.insert(plans).values(plan).returning();
+    return newPlan;
+  }
+
+  async updatePlan(id: number, plan: InsertPlan): Promise<Plan> {
+    const [updated] = await db.update(plans).set(plan).where(eq(plans.id, id)).returning();
+    return updated;
+  }
+
+  // Contractor Subscriptions
+  async getContractorSubscription(contractorId: number): Promise<ContractorSubscription | undefined> {
+    const [subscription] = await db.select().from(contractorSubscriptions)
+      .where(eq(contractorSubscriptions.contractorId, contractorId))
+      .orderBy(desc(contractorSubscriptions.id))
+      .limit(1);
+    return subscription || undefined;
+  }
+
+  async createContractorSubscription(subscription: InsertContractorSubscription): Promise<ContractorSubscription> {
+    const [newSubscription] = await db.insert(contractorSubscriptions).values(subscription).returning();
+    return newSubscription;
+  }
+
+  async updateContractorSubscription(id: number, subscription: Partial<InsertContractorSubscription>): Promise<ContractorSubscription> {
+    const [updated] = await db.update(contractorSubscriptions)
+      .set(subscription)
+      .where(eq(contractorSubscriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getSubscriptionWithPlan(contractorId: number): Promise<{subscription: ContractorSubscription, plan: Plan} | undefined> {
+    const subscription = await this.getContractorSubscription(contractorId);
+    if (!subscription) return undefined;
+    
+    const plan = await this.getPlan(subscription.planId);
+    if (!plan) return undefined;
+    
+    return { subscription, plan };
+  }
+
+  // Leads
+  async getAllLeads(): Promise<Lead[]> {
+    return await db.select().from(leads).orderBy(desc(leads.id));
+  }
+
+  async getLeadsByContractor(contractorId: number): Promise<Lead[]> {
+    return await db.select().from(leads)
+      .where(eq(leads.contractorId, contractorId))
+      .orderBy(desc(leads.id));
+  }
+
+  async createLead(lead: InsertLead): Promise<Lead> {
+    const [newLead] = await db.insert(leads).values(lead).returning();
+    
+    // Increment leads used for contractor
+    const subscription = await this.getContractorSubscription(lead.contractorId);
+    if (subscription) {
+      await this.updateContractorSubscription(subscription.id, {
+        leadsUsed: (subscription.leadsUsed || 0) + 1
+      });
+    }
+    
+    return newLead;
+  }
+
+  async updateLeadStatus(id: number, status: string): Promise<Lead> {
+    const [updated] = await db.update(leads)
+      .set({ status, updatedAt: new Date().toISOString() })
+      .where(eq(leads.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getLeadsCount(contractorId: number, month?: number, year?: number): Promise<number> {
+    const contractorLeads = await this.getLeadsByContractor(contractorId);
+    
+    if (month === undefined || year === undefined) {
+      return contractorLeads.length;
+    }
+    
+    return contractorLeads.filter(lead => {
+      const createdDate = new Date(lead.createdAt);
+      return createdDate.getMonth() === month && createdDate.getFullYear() === year;
+    }).length;
   }
 }
 

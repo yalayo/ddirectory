@@ -55,6 +55,12 @@ export default function ContractorCard({ contractor }: ContractorCardProps) {
 
             {/* Badges */}
             <div className="flex flex-wrap gap-2 mb-3">
+              {leads.length > 0 && (
+                <Badge variant="secondary" className="text-purple-700 bg-purple-50">
+                  <Users className="h-3 w-3 mr-1" />
+                  {leads.length} leads
+                </Badge>
+              )}
               {contractor.freeEstimate && (
                 <Badge variant="secondary" className="text-primary">
                   <Bolt className="h-3 w-3 mr-1" />
@@ -91,9 +97,32 @@ export default function ContractorCard({ contractor }: ContractorCardProps) {
             </p>
 
             {/* Location */}
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mb-4">
               <MapPin className="h-4 w-4 inline mr-1" />
               {contractor.location} • Serves {contractor.serviceRadius} mile radius
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Link href={`/contractor/${contractor.id}`} className="flex-1">
+                  <Button variant="outline" className="w-full text-sm">
+                    View Profile
+                  </Button>
+                </Link>
+                <Link href={`/leads?contractor=${contractor.id}`} className="flex-1">
+                  <Button variant="outline" className="w-full text-sm flex items-center gap-1">
+                    <Eye className="h-3 w-3" />
+                    Leads ({leads.length})
+                  </Button>
+                </Link>
+              </div>
+              <Button 
+                onClick={handleBookService}
+                className="w-full bg-accent-gold hover:bg-accent-gold/90 text-white"
+              >
+                Book Service
+              </Button>
             </div>
           </div>
         </div>
