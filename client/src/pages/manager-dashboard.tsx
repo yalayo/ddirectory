@@ -63,7 +63,6 @@ export default function ManagerDashboard() {
   const { data: contractors = [], isLoading: contractorsLoading } = useQuery<Contractor[]>({
     queryKey: ['/api/contractors'],
     enabled: isAuthenticated, // Only fetch when authenticated
-    select: (data) => data.sort((a, b) => a.id - b.id), // Maintain consistent ordering by ID
   });
 
   // Redirect to login if not authenticated
@@ -582,7 +581,8 @@ export default function ManagerDashboard() {
                         variant="outline"
                         onClick={() => {
                           setIsAddDialogOpen(false);
-                          resetForm();
+                          setEditingContractor(null);
+                          form.reset();
                         }}
                       >
                         Cancel
