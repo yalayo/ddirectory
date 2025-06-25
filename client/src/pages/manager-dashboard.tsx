@@ -8,6 +8,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -306,6 +307,12 @@ export default function ManagerDashboard() {
               Logout
             </Button>
             <div className="flex gap-3">
+              <Link href="/leads">
+                <Button variant="outline">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Leads
+                </Button>
+              </Link>
               <Button 
                 onClick={() => scrapeContractorsMutation.mutate()}
                 disabled={scrapeContractorsMutation.isPending}

@@ -8,6 +8,7 @@ import ContractorProfile from "@/pages/contractor-profile";
 import BookService from "@/pages/book-service";
 import ManagerDashboard from "@/pages/manager-dashboard";
 import ManagerLogin from "@/pages/manager-login";
+import LeadsManagement from "@/pages/leads-management";
 import NotFound from "@/pages/not-found";
 
 function Router() {

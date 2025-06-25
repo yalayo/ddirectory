@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
-import { insertContractorSchema } from "@shared/schema";
+import { insertContractorSchema, insertLeadSchema } from "@shared/schema";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -320,6 +320,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error scraping contractors:", error);
       res.status(500).json({ message: "Failed to scrape contractors" });
+    }
+  });
+
+  // Plans API
+  app.get("/api/plans", async (req, res) => {
+    try {
+      const plans = await storage.getAllPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+      res.status(500).json({ message: "Failed to fetch plans" });
+    }
+  });
+
+  // Contractor subscriptions API
+  app.get("/api/contractors/:id/subscription", async (req, res) => {
+    try {
+      const contractorId = parseInt(req.params.id);
+      const result = await storage.getSubscriptionWithPlan(contractorId);
+      
+      if (!result) {
+        return res.status(404).json({ message: "No subscription found" });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ message: "Failed to fetch subscription" });
+    }
+  });
+
+  app.post("/api/contractors/:id/subscription", async (req, res) => {
+    try {
+      const contractorId = parseInt(req.params.id);
+      const { planId } = req.body;
+      
+      // Deactivate existing subscription
+      const existing = await storage.getContractorSubscription(contractorId);
+      if (existing) {
+        await storage.updateContractorSubscription(existing.id, { isActive: false });
+      }
+      
+      // Create new subscription
+      const subscription = await storage.createContractorSubscription({
+        contractorId,
+        planId,
+        startDate: new Date().toISOString(),
+        isActive: true,
+        leadsUsed: 0,
+      });
+      
+      res.json(subscription);
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  // Leads API
+  app.get("/api/leads", async (req, res) => {
+    try {
+      const leads = await storage.getAllLeads();
+      res.json(leads);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ message: "Failed to fetch leads" });
+    }
+  });
+
+  app.get("/api/contractors/:id/leads", async (req, res) => {
+    try {
+      const contractorId = parseInt(req.params.id);
+      const leads = await storage.getLeadsByContractor(contractorId);
+      res.json(leads);
+    } catch (error) {
+      console.error("Error fetching contractor leads:", error);
+      res.status(500).json({ message: "Failed to fetch contractor leads" });
+    }
+  });
+
+  app.post("/api/leads", async (req, res) => {
+    try {
+      const leadData = insertLeadSchema.parse(req.body);
+      
+      // Check if contractor has available leads
+      const subscription = await storage.getSubscriptionWithPlan(leadData.contractorId);
+      if (subscription) {
+        const { subscription: sub, plan } = subscription;
+        if (sub.leadsUsed >= plan.monthlyLeads) {
+          return res.status(400).json({ 
+            message: "Contractor has reached monthly lead limit",
+            leadsUsed: sub.leadsUsed,
+            monthlyLimit: plan.monthlyLeads
+          });
+        }
+      }
+      
+      const lead = await storage.createLead(leadData);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      res.status(400).json({ message: "Invalid lead data" });
+    }
+  });
+
+  app.patch("/api/leads/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      const lead = await storage.updateLeadStatus(id, status);
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      res.status(500).json({ message: "Failed to update lead status" });
     }
   });
 

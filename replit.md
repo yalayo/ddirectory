@@ -100,6 +100,13 @@ Changelog:
   * Added Houzz scraper feature for admin users
   * Implemented consistent ordering across all contractor queries
   * Enhanced delete confirmation and error handling
+- June 25, 2025. Implemented comprehensive lead management system:
+  * Added subscription plans (Basic, Professional, Premium) with monthly lead quotas
+  * Created contractor subscription tracking with lead usage monitoring
+  * Implemented lead capture from booking form submissions
+  * Built lead management dashboard with status tracking and filtering
+  * Added contractor stats cards showing subscription plans and lead progress
+  * Integrated lead quota enforcement to prevent exceeding monthly limits
 ```
 
 ## User Preferences
