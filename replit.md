@@ -94,6 +94,12 @@ D Directory is a full-stack web application that connects homeowners with truste
 ```
 Changelog:
 - June 25, 2025. Initial setup
+- June 25, 2025. Enhanced contractor management system:
+  * Fixed contractor list ordering to maintain stable ID-based sorting
+  * Improved edit dialog functionality with proper form reset
+  * Added Houzz scraper feature for admin users
+  * Implemented consistent ordering across all contractor queries
+  * Enhanced delete confirmation and error handling
 ```
 
 ## User Preferences
