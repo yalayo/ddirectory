@@ -392,7 +392,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllContractors(): Promise<Contractor[]> {
-    return await db.select().from(contractors);
+    return await db.select().from(contractors).orderBy(contractors.id);
   }
 
   async getContractor(id: number): Promise<Contractor | undefined> {
@@ -401,16 +401,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getContractorsByCategory(category: string): Promise<Contractor[]> {
-    return await db.select().from(contractors).where(eq(contractors.category, category));
+    return await db.select().from(contractors).where(eq(contractors.category, category)).orderBy(contractors.id);
   }
 
   async getContractorsByLocation(location: string, radius?: number): Promise<Contractor[]> {
-    return await db.select().from(contractors).where(eq(contractors.location, location));
+    return await db.select().from(contractors).where(eq(contractors.location, location)).orderBy(contractors.id);
   }
 
   async searchContractors(query: string): Promise<Contractor[]> {
     // For now, return all contractors - in production would use full-text search
-    return await db.select().from(contractors);
+    return await db.select().from(contractors).orderBy(contractors.id);
   }
 
   async createContractor(contractor: InsertContractor): Promise<Contractor> {
