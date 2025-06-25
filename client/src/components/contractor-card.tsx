@@ -2,8 +2,9 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Calendar, Bolt, Award } from "lucide-react";
+import { Star, MapPin, Calendar, Bolt, Award, Eye, Users } from "lucide-react";
 import { formatRating, formatReviewCount, renderStars } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import type { Contractor } from "@shared/schema";
 
 interface ContractorCardProps {
@@ -13,6 +14,10 @@ interface ContractorCardProps {
 export default function ContractorCard({ contractor }: ContractorCardProps) {
   const [, setLocation] = useLocation();
   const stars = renderStars(contractor.rating);
+
+  const { data: leads = [] } = useQuery({
+    queryKey: [`/api/contractors/${contractor.id}/leads`],
+  });
 
   const handleBookService = () => {
     setLocation(`/book-service/${contractor.id}`);

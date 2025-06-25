@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ArrowLeft, Eye, Phone, Mail, MapPin, Calendar, DollarSign, User, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,17 @@ import type { Lead, Contractor } from "@shared/schema";
 
 export default function LeadsManagement() {
   const { toast } = useToast();
+  const [location] = useLocation();
   const [selectedContractor, setSelectedContractor] = useState<string>("all");
+
+  // Parse contractor ID from URL query parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.split('?')[1]);
+    const contractorParam = urlParams.get('contractor');
+    if (contractorParam) {
+      setSelectedContractor(contractorParam);
+    }
+  }, [location]);
 
   const { data: leads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ['/api/leads'],
