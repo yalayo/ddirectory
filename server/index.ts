@@ -47,10 +47,12 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // Force development mode for Vite setup since we need frontend
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
+  const isProduction = process.env.NODE_ENV === "production" && process.env.BUILD_MODE === "production";
+  if (isProduction) {
     serveStatic(app);
   } else {
     await setupVite(app, server);
