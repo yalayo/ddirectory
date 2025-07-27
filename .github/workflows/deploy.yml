@@ -30,6 +30,10 @@ jobs:
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         
+    - name: Inject DATABASE_ID into wrangler.toml
+      run: |
+        sed -i "s|database_id = \".*\"|database_id = \"${{ secrets.DATABASE_ID }}\"|" wrangler.toml
+        
     - name: Deploy D2 Database Schema
       run: |
         npx wrangler d2 execute d-directory-db --file=./migrations/001_initial_schema.sql

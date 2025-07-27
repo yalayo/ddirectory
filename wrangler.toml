@@ -9,7 +9,7 @@ name = "d-directory-prod"
 [[d2_databases]]
 binding = "DB"
 database_name = "d-directory-db"
-database_id = "your-database-id-here"
+database_id = "${DATABASE_ID}"
 
 [vars]
 NODE_ENV = "production"
