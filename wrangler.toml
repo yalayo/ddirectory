@@ -3,9 +3,9 @@ main = "server/index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-[assets]
-directory = "./dist"
-binding = "ASSETS"
+#[assets]
+#directory = "./dist"
+#binding = "ASSETS"
 
 [[containers]]
 class_name = "Backend"
