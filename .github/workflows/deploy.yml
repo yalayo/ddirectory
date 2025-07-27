@@ -28,7 +28,7 @@ jobs:
         
     - name: Deploy D2 Database Schema
       run: |
-        npx wrangler d2 execute d-directory-db --file=./migrations/001_initial_schema.sql
+        npx wrangler d1 execute d-directory-db --file=./migrations/001_initial_schema.sql --local=false --env=production
       env:
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         
