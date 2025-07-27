@@ -1,29 +1,15 @@
 import bcrypt from "bcryptjs";
-import { 
-  contractors, 
-  projectTypes, 
-  reviews, 
-  users,
-  plans,
-  contractorSubscriptions,
-  leads,
-  type Contractor, 
-  type InsertContractor,
-  type ProjectType,
-  type InsertProjectType,
-  type Review,
-  type InsertReview,
-  type User, 
-  type InsertUser,
-  type Plan,
-  type InsertPlan,
-  type ContractorSubscription,
-  type InsertContractorSubscription,
-  type Lead,
-  type InsertLead
+import type {
+  Contractor,
+  InsertContractor,
+  User,
+  ProjectType,
+  Lead,
+  InsertLead,
+  Plan,
+  ContractorSubscription,
+  InsertContractorSubscription,
 } from "@shared/schema";
-import { db } from "./db";
-import { eq, like, or, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Users

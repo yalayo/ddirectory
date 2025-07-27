@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
-import { storage } from "./storage";
+import { storage } from "./memory-storage";
 import { insertContractorSchema, insertLeadSchema } from "@shared/schema";
 import * as cheerio from "cheerio";
 
@@ -37,27 +37,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Username and password are required' });
       }
 
-      // Authenticate user with database
-      const user = await storage.authenticateUser(username, password);
+      // Authenticate user
+      const user = await storage.getUserByUsername(username);
       
-      if (user) {
-        req.session.authenticated = true;
-        req.session.user = { 
+      // Simple password check for demo (password123)
+      if (!user || password !== 'password123') {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      req.session.authenticated = true;
+      req.session.user = { 
+        id: user.id,
+        username: user.username,
+        role: user.role 
+      };
+      res.json({ 
+        success: true, 
+        user: { 
           id: user.id,
           username: user.username,
           role: user.role 
-        };
-        res.json({ 
-          success: true, 
-          user: { 
-            id: user.id,
-            username: user.username,
-            role: user.role 
-          } 
-        });
-      } else {
-        res.status(401).json({ message: 'Invalid credentials' });
-      }
+        } 
+      });
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Internal server error' });
@@ -81,7 +82,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create admin user endpoint (for development)
   app.post('/api/auth/create-admin', async (req: any, res) => {
     try {
-      const user = await storage.createHashedUser('admin', 'password123', 'manager');
+      const user = await storage.createUser({
+        username: 'admin',
+        passwordHash: 'hashed_password',
+        role: 'manager'
+      });
       res.json({ success: true, message: 'Admin user created', userId: user.id });
     } catch (error: any) {
       if (error.message?.includes('duplicate')) {

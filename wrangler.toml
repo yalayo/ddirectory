@@ -1,0 +1,20 @@
+name = "d-directory"
+main = "dist/worker/index.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+name = "d-directory-prod"
+
+[[d2_databases]]
+binding = "DB"
+database_name = "d-directory-db"
+database_id = "your-database-id-here"
+
+[vars]
+NODE_ENV = "production"
+
+# Environment variables for production
+# These will be set in Cloudflare dashboard:
+# SESSION_SECRET = "your-session-secret"
+# CLOUDFLARE_API_TOKEN = "your-api-token"
