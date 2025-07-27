@@ -18,7 +18,7 @@ name = "BACKEND"
 [env.production]
 name = "d-directory-prod"
 
-[[d2_databases]]
+[[env.production.d2_databases]]
 binding = "DB"
 database_name = "d-directory-db"
 database_id = "${DATABASE_ID}"
