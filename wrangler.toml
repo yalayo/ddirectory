@@ -7,27 +7,28 @@ compatibility_flags = ["nodejs_compat"]
 #directory = "./dist"
 #binding = "ASSETS"
 
-[[containers]]
-class_name = "Backend"
-image = "./Dockerfile"
-
-[[durable_objects.bindings]]
-class_name = "Backend"
-name = "BACKEND"
-
 [env.production]
 name = "d-directory-prod"
 
-[[env.production.d2_databases]]
+[[env.production.d1_databases]]
 binding = "DB"
 database_name = "d-directory-db"
 database_id = "${DATABASE_ID}"
 
-[[migrations]]
-new_sqlite_classes = [ "Backend" ]
+[env.production.durable_objects]
+bindings = [
+	{ name = "BACKEND", class_name = "Backend" }
+]
+
+[[env.production.containers]]
+class_name = "Backend"
+image = "./Dockerfile"
+
+[[env.production.migrations]]
+new_sqlite_classes = ["Backend"]
 tag = "v1"
 
-[vars]
+[env.production.vars]
 NODE_ENV = "production"
 
 # Environment variables for production
