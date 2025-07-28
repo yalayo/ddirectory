@@ -31,6 +31,9 @@ tag = "v1"
 [env.production.vars]
 NODE_ENV = "production"
 
+[env.production.observability]
+enabled = true
+
 # Environment variables for production
 # These will be set in Cloudflare dashboard:
 # SESSION_SECRET = "your-session-secret"
