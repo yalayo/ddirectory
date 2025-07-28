@@ -33,7 +33,7 @@ jobs:
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
     - name: Build and push container to Cloudflare
-      run: npx wrangler containers build --push --env=production
+      run: npx wrangler containers build . --push --env=production
       env:
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         
